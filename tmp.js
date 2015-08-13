@@ -54,7 +54,7 @@ function chain_with_delays(fn_array, delay_fn, next) {
         return _.partial(cur, wrap_wait);
     }, next);
     return begin;
-};
+}
 function click_building_upgrade_panel(building, next) {
     clickBuildingUpgradePanel(building.image);
     next();
@@ -163,7 +163,7 @@ function main_loop() {
         next();
         //setTimeout(main_loop, 1000); // 1 second
     }
-};
+}
 function post_loop(fn, delay_ms) {
     setTimeout(fn, delay_ms);
     task_running=false;
