@@ -164,8 +164,8 @@ function main_loop() {
         //setTimeout(main_loop, 1000); // 1 second
     }
 };
-function post_loop(function, delay_ms) {
-    setTimeout(function, delay_ms);
+function post_loop(fn, delay_ms) {
+    setTimeout(fn, delay_ms);
     task_running=false;
     main_loop();
 }
