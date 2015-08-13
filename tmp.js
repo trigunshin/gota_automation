@@ -152,11 +152,11 @@ function do_adventure_party(next) {
     var mark_viewed = _.partial(adventureMarkAllAsViewed, false);
     var send_party = _.partial(adventurePartySend, false);
     var close_modal = _.partial(close_modal_large);
-    var chained = [open_keep, party_tab, mark_viewed, send_party, close_modal];
+    var chained = [open_keep, party_tab, mark_viewed, send_party];
     chained = _.map(chained, function(fn) {
         return _.partial(wrap_next, fn);
     });
-    chained = [check_popups].concat(chained).concat([check_popups]);
+    chained = [check_popups].concat(chained).concat([close_modal, check_popups]);
     var execute = chain_with_delays(chained, _.partial(wait_a_bit, 5000), next);
     execute();
 }
