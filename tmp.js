@@ -92,23 +92,23 @@ function check_popups(next) {
 }
 
 // DONE
-function handle_done_item_production(building) {
+function handle_done_item_production(building, next) {
     // was producing something, but no more build time left means we're Done
     if(building.hasOwnProperty('producing_archetype_id') && !building.hasOwnProperty('build_remaining')) {
         var click_building = _.partial(click_building_upgrade_panel, building);
         var finish_production = _.partial(do_finish_production, building);
         var close_modal = _.partial(close_modal_large, 'modal_dialogs_top');
         var chained = [check_popups, click_building, finish_production, close_modal, check_popups];
-        var execute = chain_with_delays(chained, wait_fn, donezo);
+        var execute = chain_with_delays(chained, wait_fn, next);
         execute();
-    } else donezo();
+    } else next();
 }
 
 //IDLE
-function start_item_production(building, item_index) {
+function start_item_production(building, item_index, next) {
     // currently producing something, not idle
     if(building.hasOwnProperty('producing_archetype_id')) {
-        donezo();
+        next();
     } else {
         var click_building = _.partial(click_building_upgrade_panel, building);
         var click_prod_tab = _.partial(click_production_tab, building);
@@ -117,18 +117,18 @@ function start_item_production(building, item_index) {
         var close_modal = _.partial(close_modal_large, 'modal_dialogs_top');
 
         var chained = [check_popups, click_building, click_prod_tab, click_prod_tab_item, click_prod_tab_item_start, close_modal, check_popups];
-        var execute = chain_with_delays(chained, wait_fn, donezo);
+        var execute = chain_with_delays(chained, wait_fn, next);
         execute();
     }
 }
 
 //COUNTHOUSE
-function collect_counthouse(building) {
+function collect_counthouse(building, next) {
     var click_building = _.partial(click_building_upgrade_panel, building);
     var collect = _.partial(click_collect_counthouse, userContext.buildingsData[0]);
     var close_modal = _.partial(closeModalLarge, 'modal_dialogs_top');
     var chained = [check_popups, click_building, collect, close_modal, check_popups];
-    var execute = chain_with_delays(chained, _.partial(wait_a_bit, 2000), donezo);
+    var execute = chain_with_delays(chained, _.partial(wait_a_bit, 2000), next);
     execute();
 }
 
@@ -144,24 +144,12 @@ function do_adventure_party(next) {
         return _.partial(wrap_next, fn);
     });
     chained = [check_popups].concat(chained).concat([check_popups]);
-    var execute = chain_with_delays(chained, _.partial(wait_a_bit, 5000), donezo);
+    var execute = chain_with_delays(chained, _.partial(wait_a_bit, 5000), next);
     execute();
 }
 /*
-collect_counthouse(userContext.buildingsData[0]);
-
-var building = userContext.buildingsData[3]; // village
-var village_grain = _.partial(start_item_production, userContext.buildingsData[3], 9);
-var village_grain = _.partial(start_item_production, userContext.buildingsData[3], 9);
-
-var sept = userContext.buildingsData[6];
-handle_done_item_production(sept);
-start_item_production(sept, 0);
-//*/
-/*
 $('#levelmodal')
 closeInterstitial();
-
 //*/
 
 function main_loop() {
@@ -173,14 +161,19 @@ function main_loop() {
         var next = to_run.pop();
         console.info('running', next);
         next();
-        setTimeout(main_loop, 1000); // 1 second
+        //setTimeout(main_loop, 1000); // 1 second
     }
 };
+function post_loop(function, delay_ms) {
+    setTimeout(function, delay_ms);
+    task_running=false;
+    main_loop();
+}
 
 function counthouse() {
     task_running = true;
-    collect_counthouse(userContext.buildingsData[building_ids.counting.index]);
-    setTimeout(schedule_counthouse, 1000 * 60 * 60 * 3); // 3 hours
+    var next_loop = _.partial(post_loop, schedule_counthouse, 1000 * 60 * 60 * 3); // 3 hours
+    collect_counthouse(userContext.buildingsData[building_ids.counting.index], next_loop);
 }
 function schedule_counthouse() {
     to_run.push(counthouse);
@@ -188,8 +181,8 @@ function schedule_counthouse() {
 
 function adventure_party() {
     task_running = true;
-    do_adventure_party();
-    setTimeout(schedule_adventure_party, 1000 * 60 * 20); // 20 minutes
+    var next_loop = _.partial(post_loop, schedule_adventure_party, 1000 * 60 * 20); // 20 minutes
+    do_adventure_party(next_loop);
 }
 function schedule_adventure_party() {
     to_run.push(adventure_party);
@@ -199,10 +192,9 @@ function schedule_adventure_party() {
 // these still need checks on whether something is actually idle/done
 function check_godswood() {
     task_running = true;
-    handle_done_item_production(userContext.buildingsData[building_ids.godswood.index]);
-    task_running = true;
-    start_item_production(userContext.buildingsData[building_ids.godswood.index], 0);
-    setTimeout(schedule_check_godswood, 1000 * 60 * 62); // 62 minutes
+    var next_loop = _.partial(post_loop, schedule_check_godswood, 1000 * 60 * 62); // 62 minutes
+    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.godswood.index], 0, next_loop);
+    handle_done_item_production(userContext.buildingsData[building_ids.godswood.index], start_item);
 }
 function schedule_check_godswood() {
     to_run.push(check_godswood);
@@ -210,10 +202,9 @@ function schedule_check_godswood() {
 
 function check_feast() {
     task_running = true;
-    handle_done_item_production(userContext.buildingsData[building_ids.feast.index]);
-    task_running = true;
-    start_item_production(userContext.buildingsData[building_ids.feast.index], 0);
-    setTimeout(schedule_check_feast, 1000 * 60 * 15); // 15 minutes
+    var next_loop = _.partial(post_loop, schedule_check_feast, 1000 * 60 * 15); // 15 minutes
+    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.feast.index], 0, next_loop);
+    handle_done_item_production(userContext.buildingsData[building_ids.feast.index], start_item);
 }
 function schedule_check_feast() {
     to_run.push(check_feast);
@@ -221,10 +212,9 @@ function schedule_check_feast() {
 
 function check_sept() {
     task_running = true;
-    handle_done_item_production(userContext.buildingsData[building_ids.sept.index]);
-    task_running = true;
-    start_item_production(userContext.buildingsData[building_ids.sept.index], 0);
-    setTimeout(schedule_check_sept, 1000 * 60 * 62); // 62 minutes
+    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 62); // 62 minutes
+    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.sept.index], 0, next_loop);
+    handle_done_item_production(userContext.buildingsData[building_ids.sept.index], start_item);
 }
 function schedule_check_sept() {
     to_run.push(check_sept);
@@ -232,10 +222,9 @@ function schedule_check_sept() {
 
 function check_village() {
     task_running = true;
-    handle_done_item_production(userContext.buildingsData[building_ids.village.index]);
-    task_running = true;
-    start_item_production(userContext.buildingsData[building_ids.village.index], 9);  // grain
-    setTimeout(schedule_check_sept, 1000 * 60 * 80); // 80 minutes
+    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 80); // 80 minutes
+    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.village.index], 9, next_loop);  // grain
+    handle_done_item_production(userContext.buildingsData[building_ids.village.index], start_item);
 }
 function schedule_check_village() {
     to_run.push(check_village);
