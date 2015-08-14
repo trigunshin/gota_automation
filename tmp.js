@@ -180,7 +180,7 @@ function post_loop(fn, delay_ms) {
     if(auto_debug) {console.debug('post-loop handler called, scheduling', fn)};
     setTimeout(fn, delay_ms);
     task_running=false;
-    main_loop();
+    //main_loop();
 }
 
 function counthouse() {
@@ -195,7 +195,7 @@ function schedule_counthouse() {
 
 function adventure_party() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_adventure_party, 1000 * 60 * 20); // 20 minutes
+    var next_loop = _.partial(post_loop, schedule_adventure_party, 1000 * 60 * 3);
     do_adventure_party(next_loop);
 }
 function schedule_adventure_party() {
@@ -207,7 +207,7 @@ function schedule_adventure_party() {
 // these still need checks on whether something is actually idle/done
 function check_godswood() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_godswood, 1000 * 60 * 62); // 62 minutes
+    var next_loop = _.partial(post_loop, schedule_check_godswood, 1000 * 60 * 2);
     var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.godswood.index], 0, next_loop);
     handle_done_item_production(userContext.buildingsData[building_ids.godswood.index], start_item);
 }
@@ -218,7 +218,7 @@ function schedule_check_godswood() {
 
 function check_feast() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_feast, 1000 * 60 * 15); // 15 minutes
+    var next_loop = _.partial(post_loop, schedule_check_feast, 1000 * 60 * 2);
     var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.feast.index], 0, next_loop);
     handle_done_item_production(userContext.buildingsData[building_ids.feast.index], start_item);
 }
@@ -229,7 +229,7 @@ function schedule_check_feast() {
 
 function check_sept() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 62); // 62 minutes
+    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 2);
     var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.sept.index], 0, next_loop);
     handle_done_item_production(userContext.buildingsData[building_ids.sept.index], start_item);
 }
@@ -240,7 +240,7 @@ function schedule_check_sept() {
 
 function check_village() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 80); // 80 minutes
+    var next_loop = _.partial(post_loop, schedule_check_village, 1000 * 60 * 2);
     var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.village.index], 9, next_loop);  // grain
     handle_done_item_production(userContext.buildingsData[building_ids.village.index], start_item);
 }
