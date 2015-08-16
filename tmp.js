@@ -273,5 +273,5 @@ var user_interaction = false;
 var task_running = false;
 var auto_debug = true;
 // var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_godswood];
-var to_run = [counthouse, adventure_party, check_village, check_feast, check_glasshouse];
+var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_glasshouse];
 main_loop();
