@@ -3,8 +3,8 @@ var building_ids = {
     village: {
         jid: '#bc_920',
         name: 'village_center',
-        // 9: grains, 3: fish, 
-        production: 9,
+        // 9: grains, 3: fish, 0:stone
+        production: 3,
         index: 3
     },
     counting: {
@@ -34,6 +34,11 @@ var building_ids = {
         name: 'feast',
         production: 0,
         index:19
+    },
+    glasshouse: {
+        name: 'glasshouse',
+        production: 0,
+        index: 15,
     }
 };
 
@@ -43,7 +48,7 @@ function wrap_next(fn, next) {
 }
 // wrapper function to set a delay
 function wait_a_bit(delay_ms, next) {
-    if(auto_debug) {console.debug('setting timeout',delay_ms,'for',next)};
+    // if(auto_debug) {console.debug('setting timeout',delay_ms,'for',next)};
     setTimeout(next, delay_ms);
 }
 var wait_fn = _.partial(wait_a_bit, 2000);
@@ -227,6 +232,17 @@ function schedule_check_feast() {
     to_run.push(check_feast);
 }
 
+function check_glasshouse() {
+    task_running = true;
+    var next_loop = _.partial(post_loop, schedule_check_glasshouse, 1000 * 60 * 2);
+    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.glasshouse.index], 0, next_loop);
+    handle_done_item_production(userContext.buildingsData[building_ids.glasshouse.index], start_item);
+}
+function schedule_check_glasshouse() {
+    if(auto_debug) {console.debug('adding glasshouse to queue')};
+    to_run.push(check_glasshouse);
+}
+
 function check_sept() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 2);
@@ -256,5 +272,6 @@ var user_interaction = false;
 // set to true on task start, false on donezo()
 var task_running = false;
 var auto_debug = true;
-var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_godswood];
+// var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_godswood];
+var to_run = [counthouse, adventure_party, check_village, check_feast, check_glasshouse];
 main_loop();
