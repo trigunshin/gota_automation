@@ -3,8 +3,8 @@ var building_ids = {
     village: {
         jid: '#bc_920',
         name: 'village_center',
-        // 9: grains, 3: fish, 0:stone
-        production: 3,
+        // 9: grains, 3: fish, 0:stone, 4:fur
+        production: 4,
         index: 3
     },
     counting: {
@@ -39,6 +39,11 @@ var building_ids = {
         name: 'glasshouse',
         production: 0,
         index: 15,
+    },
+    fishery: {
+        name: 'fishery',
+        production: 0,
+        index: 16,
     }
 };
 
@@ -60,11 +65,13 @@ function chain_with_delays(fn_array, delay_fn, next) {
     }, next);
     return begin;
 }
-function click_building_upgrade_panel(building, next) {
-    clickBuildingUpgradePanel(building.image);
+function click_building_upgrade_panel(building_id, next) {
+    var building = userContext.buildingsData[building_id];
+    clickBuildingUpgradePanel(building.symbol);
     next();
 }
-function do_finish_production(building, next) {
+function do_finish_production(building_id, next) {
+    var building = userContext.buildingsData[building_id];
     doFinishProduction(building.item_id.toString());
     next();
 }
@@ -72,7 +79,7 @@ function close_modal_large(next) {
     closeModalLarge('modal_dialogs_top');
     next();
 }
-function click_production_tab(building, next) {
+function click_production_tab(next) {
     buildingTabProd();
     next();
 }
@@ -80,13 +87,14 @@ function click_production_tab_item(item_index, next) {
     productionItem(item_index);
     next();
 }
-function click_production_tab_item_start(building, next) {
+function click_production_tab_item_start(next) {
     var to_click = $("span.btnwrap.btnmed.equipbtn");
     if(to_click.length === 2) to_click[1].click();
     else to_click.click();
     next();
 }
-function click_collect_counthouse(building, next) {
+function click_collect_counthouse(building_id, next) {
+    var building = userContext.buildingsData[building_id];
     doCollect(building.item_id.toString());
     next();
 }
@@ -98,13 +106,14 @@ function check_popups(next) {
 }
 
 // DONE
-function handle_done_item_production(building, next) {
+function handle_done_item_production(building_id, next) {
+    var building = userContext.buildingsData[building_id];
     // was producing something, but no more build time left means we're Done
     if(building.hasOwnProperty('producing_archetype_id') && !building.hasOwnProperty('build_remaining')) {
         if(auto_debug) {console.debug('finishing building',building.name)};
 
-        var click_building = _.partial(click_building_upgrade_panel, building);
-        var finish_production = _.partial(do_finish_production, building);
+        var click_building = _.partial(click_building_upgrade_panel, building_id);
+        var finish_production = _.partial(do_finish_production, building_id);
         var close_modal = _.partial(close_modal_large);
         var chained = [check_popups, click_building, finish_production, close_modal, check_popups];
         var execute = chain_with_delays(chained, wait_fn, next);
@@ -116,7 +125,8 @@ function handle_done_item_production(building, next) {
 }
 
 //IDLE
-function start_item_production(building, item_index, next) {
+function start_item_production(building_id, item_index, next) {
+    var building = userContext.buildingsData[building_id];
     // currently producing something, not idle
     if(building.hasOwnProperty('producing_archetype_id')) {
         if(auto_debug) {console.debug('skipping start, building',building.name,'is not idle')};
@@ -124,10 +134,10 @@ function start_item_production(building, item_index, next) {
     } else {
         if(auto_debug) {console.debug('starting building',building.name)};
 
-        var click_building = _.partial(click_building_upgrade_panel, building);
-        var click_prod_tab = _.partial(click_production_tab, building);
+        var click_building = _.partial(click_building_upgrade_panel, building_id);
+        var click_prod_tab = _.partial(click_production_tab);
         var click_prod_tab_item = _.partial(click_production_tab_item, item_index);
-        var click_prod_tab_item_start = _.partial(click_production_tab_item_start, building);
+        var click_prod_tab_item_start = _.partial(click_production_tab_item_start);
         var close_modal = _.partial(close_modal_large);
 
         var chained = [check_popups, click_building, click_prod_tab, click_prod_tab_item, click_prod_tab_item_start, close_modal, check_popups];
@@ -137,11 +147,12 @@ function start_item_production(building, item_index, next) {
 }
 
 //COUNTHOUSE
-function collect_counthouse(building, next) {
+function collect_counthouse(building_id, next) {
+    var building = userContext.buildingsData[building_id];
     if(auto_debug) {console.debug('handling counthouse@',building.name)};
 
-    var click_building = _.partial(click_building_upgrade_panel, building);
-    var collect = _.partial(click_collect_counthouse, userContext.buildingsData[0]);
+    var click_building = _.partial(click_building_upgrade_panel, building_id);
+    var collect = _.partial(click_collect_counthouse, building_ids.counting.index);
     var close_modal = _.partial(close_modal_large);
     var chained = [check_popups, click_building, collect, close_modal, check_popups];
     var execute = chain_with_delays(chained, _.partial(wait_a_bit, 2000), next);
@@ -191,7 +202,7 @@ function post_loop(fn, delay_ms) {
 function counthouse() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_counthouse, 1000 * 60 * 60 * 3); // 3 hours
-    collect_counthouse(userContext.buildingsData[building_ids.counting.index], next_loop);
+    collect_counthouse(building_ids.counting.index, next_loop);
 }
 function schedule_counthouse() {
     if(auto_debug) {console.debug('adding counthouse to queue')};
@@ -213,8 +224,8 @@ function schedule_adventure_party() {
 function check_godswood() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_godswood, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.godswood.index], 0, next_loop);
-    handle_done_item_production(userContext.buildingsData[building_ids.godswood.index], start_item);
+    var start_item = _.partial(start_item_production, building_ids.godswood.index, 0, next_loop);
+    handle_done_item_production(building_ids.godswood.index, start_item);
 }
 function schedule_check_godswood() {
     if(auto_debug) {console.debug('adding godswood to queue')};
@@ -224,8 +235,8 @@ function schedule_check_godswood() {
 function check_feast() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_feast, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.feast.index], 0, next_loop);
-    handle_done_item_production(userContext.buildingsData[building_ids.feast.index], start_item);
+    var start_item = _.partial(start_item_production, building_ids.feast.index, 0, next_loop);
+    handle_done_item_production(building_ids.feast.index, start_item);
 }
 function schedule_check_feast() {
     if(auto_debug) {console.debug('adding feast to queue')};
@@ -235,8 +246,8 @@ function schedule_check_feast() {
 function check_glasshouse() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_glasshouse, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.glasshouse.index], 0, next_loop);
-    handle_done_item_production(userContext.buildingsData[building_ids.glasshouse.index], start_item);
+    var start_item = _.partial(start_item_production, building_ids.glasshouse.index, 0, next_loop);
+    handle_done_item_production(building_ids.glasshouse.index, start_item);
 }
 function schedule_check_glasshouse() {
     if(auto_debug) {console.debug('adding glasshouse to queue')};
@@ -246,8 +257,8 @@ function schedule_check_glasshouse() {
 function check_sept() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.sept.index], 0, next_loop);
-    handle_done_item_production(userContext.buildingsData[building_ids.sept.index], start_item);
+    var start_item = _.partial(start_item_production, building_ids.sept.index, 0, next_loop);
+    handle_done_item_production(building_ids.sept.index, start_item);
 }
 function schedule_check_sept() {
     if(auto_debug) {console.debug('adding sept to queue')};
@@ -257,12 +268,23 @@ function schedule_check_sept() {
 function check_village() {
     task_running = true;
     var next_loop = _.partial(post_loop, schedule_check_village, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, userContext.buildingsData[building_ids.village.index], 9, next_loop);  // grain
-    handle_done_item_production(userContext.buildingsData[building_ids.village.index], start_item);
+    var start_item = _.partial(start_item_production, building_ids.village.index, building_ids.village.production, next_loop);  // grain
+    handle_done_item_production(building_ids.village.index, start_item);
 }
 function schedule_check_village() {
     if(auto_debug) {console.debug('adding village to queue')};
     to_run.push(check_village);
+}
+
+function check_fishery() {
+    task_running = true;
+    var next_loop = _.partial(post_loop, schedule_check_fishery, 1000 * 60 * 2);
+    var start_item = _.partial(start_item_production, building_ids.fishery.index, building_ids.fishery.production, next_loop);
+    handle_done_item_production(building_ids.fishery.index, start_item);
+}
+function schedule_check_fishery() {
+    if(auto_debug) {console.debug('adding fishery to queue')};
+    to_run.push(check_fishery);
 }
 
 // flag to let user play
@@ -272,6 +294,6 @@ var user_interaction = false;
 // set to true on task start, false on donezo()
 var task_running = false;
 var auto_debug = true;
-// var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_godswood];
-var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_glasshouse];
+//var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_glasshouse, check_godswood];
+var to_run = [counthouse, check_village, check_feast, check_glasshouse, check_fishery];
 main_loop();
