@@ -101,7 +101,7 @@ function click_collect_counthouse(building_id, next) {
 function donezo() {if(auto_debug) {console.debug('donezo')};task_running=false;}
 function check_popups(next) {
     if(auto_debug) {console.debug('checking popups')};
-    if($('#levelmodal').length > 0) closeInterstitial();
+    if($('.levelmodal').length > 0) closeInterstitial();
     next();
 }
 
