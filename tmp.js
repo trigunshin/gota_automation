@@ -187,13 +187,13 @@ function main_loop() {
     } else {
         // pull a job, then schedule another loop shortly
         var next = to_run.pop();
-        if(auto_debug) {console.debug('main loop running',next)};
+        //if(auto_debug) {console.debug('main loop running',next)};
         next();
     }
-    setTimeout(main_loop, 20 * 1000); // 20 seconds
+    setTimeout(main_loop, 15 * 1000); // 20 seconds
 }
 function post_loop(fn, delay_ms) {
-    if(auto_debug) {console.debug('post-loop handler called, scheduling', fn)};
+    if(auto_debug) {console.debug('post-loop handler called, scheduling next...')};
     setTimeout(fn, delay_ms);
     task_running=false;
     //main_loop();
@@ -219,81 +219,57 @@ function schedule_adventure_party() {
     to_run.push(adventure_party);
 }
 
-
-// these still need checks on whether something is actually idle/done
-function check_godswood() {
-    task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_godswood, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.godswood.index, 0, next_loop);
-    handle_done_item_production(building_ids.godswood.index, start_item);
-}
-function schedule_check_godswood() {
-    if(auto_debug) {console.debug('adding godswood to queue')};
-    to_run.push(check_godswood);
-}
-
-function check_feast() {
-    task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_feast, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.feast.index, 0, next_loop);
-    handle_done_item_production(building_ids.feast.index, start_item);
-}
-function schedule_check_feast() {
-    if(auto_debug) {console.debug('adding feast to queue')};
-    to_run.push(check_feast);
+function check_speedup(building_id, next) {
+    var building = userContext.buildingsData[building_id];
+    // XXX this still has a bug, probably when DONE
+    if(building.build_remaining > free_speedup_threshold) {
+        console.warn(building.symbol, 'not ready for speedup:', building.build_remaining);
+    } else {
+        console.warn('speeding up', building.symbol);
+        doInstantSpeedUp(building.id);
+        // speedBuild(speedItem, producedItemId);
+        // doInstantSpeedUp(building.id);
+        // $('div.itemspeedup a.btngold').click();
+    }
+    next();
 }
 
-function check_glasshouse() {
+// generic helpers
+function check_prod(building_id, production_offset, delay_ms) {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_glasshouse, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.glasshouse.index, 0, next_loop);
-    handle_done_item_production(building_ids.glasshouse.index, start_item);
-}
-function schedule_check_glasshouse() {
-    if(auto_debug) {console.debug('adding glasshouse to queue')};
-    to_run.push(check_glasshouse);
-}
 
-function check_sept() {
-    task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_sept, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.sept.index, 0, next_loop);
-    handle_done_item_production(building_ids.sept.index, start_item);
-}
-function schedule_check_sept() {
-    if(auto_debug) {console.debug('adding sept to queue')};
-    to_run.push(check_sept);
-}
+    // mimic the arguments
+    var clone_this = _.partial(check_prod, building_id, production_offset, delay_ms);
+    var scheduler = _.partial(schedule_check, clone_this);
 
-function check_village() {
-    task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_village, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.village.index, building_ids.village.production, next_loop);  // grain
-    handle_done_item_production(building_ids.village.index, start_item);
-}
-function schedule_check_village() {
-    if(auto_debug) {console.debug('adding village to queue')};
-    to_run.push(check_village);
-}
+    var next_loop = _.partial(post_loop, scheduler, delay_ms);
+    var start_item = _.partial(start_item_production, building_id, production_offset, next_loop);
+    var finish_item = _.partial(handle_done_item_production, building_id, start_item);
+    check_speedup(building_id, finish_item);
 
-function check_fishery() {
-    task_running = true;
-    var next_loop = _.partial(post_loop, schedule_check_fishery, 1000 * 60 * 2);
-    var start_item = _.partial(start_item_production, building_ids.fishery.index, building_ids.fishery.production, next_loop);
-    handle_done_item_production(building_ids.fishery.index, start_item);
 }
-function schedule_check_fishery() {
-    if(auto_debug) {console.debug('adding fishery to queue')};
-    to_run.push(check_fishery);
+function schedule_check(checker) {
+    if(auto_debug) {console.debug('adding check to queue')};
+    to_run.push(checker);
 }
+// implemented helpers
+var gen_market = _.partial(check_prod, building_ids.market.index, building_ids.market.production, 1000 * 60 * 2);
+var gen_village = _.partial(check_prod, building_ids.village.index, building_ids.village.production, 1000 * 60 * 2);
+var gen_market = _.partial(check_prod, building_ids.market.index, building_ids.market.production, 1000 * 60 * 2);
+var gen_sept = _.partial(check_prod, building_ids.sept.index, building_ids.sept.production, 1000 * 60 * 2);
+var gen_godswood = _.partial(check_prod, building_ids.godswood.index, building_ids.godswood.production, 1000 * 60 * 2);
+var gen_feast = _.partial(check_prod, building_ids.feast.index, building_ids.feast.production, 1000 * 60 * 2);
+var gen_glasshouse = _.partial(check_prod, building_ids.glasshouse.index, building_ids.glasshouse.production, 1000 * 60 * 2);
+var gen_fishery = _.partial(check_prod, building_ids.fishery.index, building_ids.fishery.production, 1000 * 60 * 2);
 
 // flag to let user play
 var user_interaction = false;
 // do'nt start new tasks when one is running
-// this doesn't have an escape for error conditions & will deadlock
-// set to true on task start, false on donezo()
+// this doesn't have an escape for error conditions & will sit @ true forever
+// set to true on task start, false on post_loop
 var task_running = false;
 var auto_debug = true;
+var free_speedup_threshold = 60 * 4 + 50; // 4 minutes & 50 seconds
 //var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_glasshouse, check_godswood];
-var to_run = [counthouse, check_village, check_feast, check_glasshouse, check_fishery];
+var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_market, gen_sept];
 main_loop();
