@@ -1,36 +1,36 @@
 $('a#navlink-buildings').click();
 var building_ids = {
     village: {
-        jid: '#bc_920',
         name: 'village_center',
         // 9: grains, 3: fish, 0:stone, 4:fur
         production: 4,
         index: 3
     },
+    market: {
+        name: 'market',
+        // 9: grains, 3: fish, 0:stone, 4:fur
+        production: 0,
+        index: 5
+    },
     counting: {
-        jid: '#bc_6',
         name: 'counting_house',
         index: 0,
     },
     keep: {
-        jid: 'bc_619',
         name: 'keep',
         index: 1,
     },
     sept: {
-        jid: '#bc_52',
         name: 'sept',
         production: 0,
         index: 6,
     },
     godswood: {
-        jid: '#bc_60',
         name: 'godswood',
         production: 0,
         index: 7,
     },
     feast: {
-        jid: '#bc_325',
         name: 'feast',
         production: 0,
         index:19
