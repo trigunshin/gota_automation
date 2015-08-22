@@ -221,15 +221,12 @@ function schedule_adventure_party() {
 
 function check_speedup(building_id, next) {
     var building = userContext.buildingsData[building_id];
-    // XXX this still has a bug, probably when DONE
-    if(building.build_remaining > free_speedup_threshold) {
+    var r_time = building.build_remaining;
+    if(r_time === void 0 || r_time > free_speedup_threshold) {
         console.warn(building.symbol, 'not ready for speedup:', building.build_remaining);
     } else {
         console.warn('speeding up', building.symbol);
         doInstantSpeedUp(building.id);
-        // speedBuild(speedItem, producedItemId);
-        // doInstantSpeedUp(building.id);
-        // $('div.itemspeedup a.btngold').click();
     }
     next();
 }
