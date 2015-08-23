@@ -8,8 +8,8 @@ var building_ids = {
     },
     market: {
         name: 'market',
-        // 9: grains, 3: fish, 0:stone, 4:fur
-        production: 0,
+        //production: 0,
+        production: 3,
         index: 5
     },
     counting: {
@@ -42,7 +42,8 @@ var building_ids = {
     },
     fishery: {
         name: 'fishery',
-        production: 0,
+        //production: 0,
+        production: 7, // random resource
         index: 16,
     }
 };
@@ -243,7 +244,6 @@ function check_prod(building_id, production_offset, delay_ms) {
     var start_item = _.partial(start_item_production, building_id, production_offset, next_loop);
     var finish_item = _.partial(handle_done_item_production, building_id, start_item);
     check_speedup(building_id, finish_item);
-
 }
 function schedule_check(checker) {
     if(auto_debug) {console.debug('adding check to queue')};
