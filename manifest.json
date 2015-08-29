@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+
+  "name": "Got:A Automation",
+  "description": "Partially Automate Game of Thrones: Ascent",
+  "version": "1.0",
+
+  "content_scripts": [{
+        "matches": ["*://gota-www.disruptorbeam.com/"],
+        "js": [
+          "injector.js"
+        ]
+  }],
+  "web_accessible_resources": ["tmp.js", "test_modal.html"],
+  "permissions": [
+    "storage"
+  ]
+}
