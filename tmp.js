@@ -1,8 +1,16 @@
 $('a#navlink-buildings').click();
 var building_ids = {
+    counting: {
+        name: 'counting_house',
+        index: 0,
+    },
+    keep: {
+        name: 'keep',
+        index: 1,
+    },
     village: {
         name: 'village_center',
-        // 9: grains, 3: fish, 0:stone, 4:fur
+        // 9: grains, 3: fish, 0:stone, 4:fur, 8:cloth
         production: 4,
         index: 3
     },
@@ -11,14 +19,6 @@ var building_ids = {
         //production: 0,
         production: 3,
         index: 5
-    },
-    counting: {
-        name: 'counting_house',
-        index: 0,
-    },
-    keep: {
-        name: 'keep',
-        index: 1,
     },
     sept: {
         name: 'sept',
@@ -30,10 +30,15 @@ var building_ids = {
         production: 0,
         index: 7,
     },
-    feast: {
-        name: 'feast',
+    rhllor_temple: {
+        name: 'rhllor temple',
         production: 0,
-        index:19
+        index: 8,
+    },
+    arbor: {
+        name: 'arbor',
+        production: 0,
+        index: 14,
     },
     glasshouse: {
         name: 'glasshouse',
@@ -42,9 +47,14 @@ var building_ids = {
     },
     fishery: {
         name: 'fishery',
-        //production: 0,
-        production: 7, // random resource
+        production: 0, // fish
+        //production: 7, // random resource
         index: 16,
+    },
+    feast: {
+        name: 'feast',
+        production: 0,
+        index:19
     }
 };
 
@@ -202,7 +212,7 @@ function post_loop(fn, delay_ms) {
 
 function counthouse() {
     task_running = true;
-    var next_loop = _.partial(post_loop, schedule_counthouse, 1000 * 60 * 60 * 3); // 3 hours
+    var next_loop = _.partial(post_loop, schedule_counthouse, 1000 * 60 * 60 * 1); // 1 hour
     collect_counthouse(building_ids.counting.index, next_loop);
 }
 function schedule_counthouse() {
@@ -255,9 +265,11 @@ var gen_village = _.partial(check_prod, building_ids.village.index, building_ids
 var gen_market = _.partial(check_prod, building_ids.market.index, building_ids.market.production, 1000 * 60 * 2);
 var gen_sept = _.partial(check_prod, building_ids.sept.index, building_ids.sept.production, 1000 * 60 * 2);
 var gen_godswood = _.partial(check_prod, building_ids.godswood.index, building_ids.godswood.production, 1000 * 60 * 2);
+var gen_temple = _.partial(check_prod, building_ids.rhllor_temple.index, building_ids.rhllor_temple.production, 1000 * 60 * 2);
 var gen_feast = _.partial(check_prod, building_ids.feast.index, building_ids.feast.production, 1000 * 60 * 2);
 var gen_glasshouse = _.partial(check_prod, building_ids.glasshouse.index, building_ids.glasshouse.production, 1000 * 60 * 2);
 var gen_fishery = _.partial(check_prod, building_ids.fishery.index, building_ids.fishery.production, 1000 * 60 * 2);
+var gen_arbor = _.partial(check_prod, building_ids.arbor.index, building_ids.arbor.production, 1000 * 60 * 2);
 
 // flag to let user play
 var user_interaction = false;
@@ -267,6 +279,41 @@ var user_interaction = false;
 var task_running = false;
 var auto_debug = true;
 var free_speedup_threshold = 60 * 4 + 50; // 4 minutes & 50 seconds
-//var to_run = [counthouse, adventure_party, check_village, check_feast, check_sept, check_glasshouse, check_godswood];
-var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_market, gen_sept];
+//var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_market, gen_sept, gen_godswood, gen_temple, gen_arbor];
+var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_arbor, gen_sept];
 main_loop();
+
+
+function _getCurrentQuestActionItems() {
+    var b = userContext.playerData.quests;
+    var ret = _.map(userContext.playerData.quests, function(quest) {
+        var g=!1;
+        "pro_q6_the_captain_arrives"==quest.symbol&&void 0==userContext.flags.flag_power_tutorial_done&&(g=!0);
+        -1!=quest.symbol.indexOf("first_impressions")&&(void 0==userContext.flags.friends_selector_tutoral_done&&"web"!=userContext.playerData.provider&&"armorgames"!=userContext.playerData.provider&&"ipad"!=userContext.playerData.provider)&&(g=!0);
+        if(!0==userContext.bossInviteMode)
+            !0!=quest.boss_invite&&(g=!0);
+        if(g) return false;
+
+        g=romanNumeral(parseInt(quest.sequence+1));
+        quest.chain==quest.name&&(g="");
+        var complete=!1;
+        !0==quest.goals_all_completed&&(complete=!0);
+        0<quest.expiration_original_seconds&&0>=quest.seconds_remaining&&(complete=!0);
+        action_object={
+            button_id: "quest_button_"+quest.symbol,
+            id: quest.id,
+            complete: complete,
+            icon: "/images/icons/questicon-"+quest.icon+".png",
+            seconds_remaining: quest.seconds_remaining,
+            label: wrapText(quest.chain,18)+" "+g,
+            "short": quest.short,
+            callback: function(a){
+                questDisplayById(userContext.actions[a].id)
+            },
+            viewed: quest.viewed,
+            auto_launch: quest.auto_launch
+        };
+        return action_object;
+    });
+    return _.filter(ret, _.identity);
+}
