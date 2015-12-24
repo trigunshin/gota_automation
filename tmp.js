@@ -11,7 +11,7 @@ var building_ids = {
     village: {
         name: 'village_center',
         // 9: grains, 3: fish, 0:stone, 4:fur, 8:cloth
-        production: 4,
+        production: 0,
         index: 3
     },
     market: {
@@ -151,7 +151,8 @@ function start_item_production(building_id, item_index, next) {
         var click_prod_tab_item_start = _.partial(click_production_tab_item_start);
         var close_modal = _.partial(close_modal_large);
 
-        var chained = [check_popups, click_building, click_prod_tab, click_prod_tab_item, click_prod_tab_item_start, close_modal, check_popups];
+        var chained = [check_popups, click_building, click_prod_tab, click_prod_tab_item,
+            click_prod_tab_item_start, close_modal, check_popups];
         var execute = chain_with_delays(chained, wait_fn, next);
         execute();
     }
@@ -279,8 +280,9 @@ var user_interaction = false;
 var task_running = false;
 var auto_debug = true;
 var free_speedup_threshold = 60 * 4 + 50; // 4 minutes & 50 seconds
-//var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_market, gen_sept, gen_godswood, gen_temple, gen_arbor];
-var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_arbor, gen_sept];
+//var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse,
+//    gen_fishery, gen_market, gen_sept, gen_godswood, gen_temple, gen_arbor];
+var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_arbor];
 main_loop();
 
 
@@ -289,7 +291,11 @@ function _getCurrentQuestActionItems() {
     var ret = _.map(userContext.playerData.quests, function(quest) {
         var g=!1;
         "pro_q6_the_captain_arrives"==quest.symbol&&void 0==userContext.flags.flag_power_tutorial_done&&(g=!0);
-        -1!=quest.symbol.indexOf("first_impressions")&&(void 0==userContext.flags.friends_selector_tutoral_done&&"web"!=userContext.playerData.provider&&"armorgames"!=userContext.playerData.provider&&"ipad"!=userContext.playerData.provider)&&(g=!0);
+        -1!=quest.symbol.indexOf("first_impressions")&&(
+            void 0==userContext.flags.friends_selector_tutoral_done
+            &&"web"!=userContext.playerData.provider
+            &&"armorgames"!=userContext.playerData.provider
+            &&"ipad"!=userContext.playerData.provider)&&(g=!0);
         if(!0==userContext.bossInviteMode)
             !0!=quest.boss_invite&&(g=!0);
         if(g) return false;
