@@ -280,7 +280,7 @@ var task_running = false;
 var auto_debug = true;
 var free_speedup_threshold = 60 * 4 + 50; // 4 minutes & 50 seconds
 //var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_market, gen_sept, gen_godswood, gen_temple, gen_arbor];
-var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_arbor, gen_sept];
+var to_run = [counthouse, adventure_party, gen_village, gen_feast, gen_glasshouse, gen_fishery, gen_arbor, gen_sept, gen_godswood];
 main_loop();
 
 
